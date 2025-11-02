@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 120 20% 97%;
+    --foreground: 150 15% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 150 15% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 15% 15%;
+
+    --primary: 120 35% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 120 10% 95%;
+    --secondary-foreground: 150 15% 25%;
+
+    --muted: 120 8% 96%;
+    --muted-foreground: 150 10% 45%;
+
+    --accent: 120 15% 92%;
+    --accent-foreground: 150 15% 25%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 120 15% 88%;
+    --input: 120 15% 94%;
+    --ring: 120 35% 65%;
+
+    /* Custom PetManager colors */
+    --petmanager-primary: 120 35% 65%;
+    --petmanager-primary-light: 120 45% 85%;
+    --petmanager-surface: 0 0% 100%;
+    --petmanager-accent: 180 60% 70%;
+    --petmanager-success: 140 50% 75%;
+    --petmanager-error: 0 65% 85%;
+    --petmanager-error-foreground: 0 65% 45%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 150 15% 8%;
+    --foreground: 120 20% 95%;
+
+    --card: 150 15% 12%;
+    --card-foreground: 120 20% 95%;
+
+    --popover: 150 15% 12%;
+    --popover-foreground: 120 20% 95%;
+
+    --primary: 120 35% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 150 10% 18%;
+    --secondary-foreground: 120 20% 85%;
+
+    --muted: 150 10% 18%;
+    --muted-foreground: 120 15% 65%;
+
+    --accent: 150 10% 18%;
+    --accent-foreground: 120 20% 85%;
+
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 150 10% 22%;
+    --input: 150 10% 22%;
+    --ring: 120 35% 55%;
+
+    /* Dark mode PetManager colors */
+    --petmanager-primary: 120 35% 55%;
+    --petmanager-primary-light: 120 25% 25%;
+    --petmanager-surface: 150 15% 12%;
+    --petmanager-accent: 180 50% 50%;
+    --petmanager-success: 140 40% 50%;
+    --petmanager-error: 0 45% 25%;
+    --petmanager-error-foreground: 0 65% 75%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
