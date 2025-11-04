@@ -1,27 +1,31 @@
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { UserCog } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-// Mock data - esto puede venir de una base de datos más adelante
-const providers = [
-  { id: 1, name: "PetNova Colombia", nit: "900123456-7", phone: "+57 301 234 5678", email: "contacto@petnova.co" },
-  { id: 2, name: "Huella Viva S.A.S.", nit: "900234567-8", phone: "+57 302 345 6789", email: "info@huellaviva.com" },
-  { id: 3, name: "MundoPet Distribuciones", nit: "900345678-9", phone: "+57 303 456 7890", email: "ventas@mundopet.co" },
-  { id: 4, name: "PetCare Solutions Ltda.", nit: "800912345-1", phone: "+57 320 915 7482", email: "servicio@petcaresolutions.com.co" },
-  { id: 5, name: "Animalia Express", nit: "900456789-0", phone: "+57 304 567 8901", email: "pedidos@animaliaexpress.co" },
-];
+import { useEffect, useState } from "react";
+import { providerService, type Provider } from "@/services";
+import { Loader2 } from "lucide-react";
 
 export default function Proveedores() {
   const navigate = useNavigate();
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProviders = async () => {
+      try {
+        const data = await providerService.getAll();
+        setProviders(data);
+      } catch (error) {
+        console.error("Error obteniendo proveedores", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProviders();
+  }, []);
 
   return (
     <Layout userInitial="G">
@@ -42,34 +46,41 @@ export default function Proveedores() {
               <CardTitle>Proveedores Registrados</CardTitle>
             </div>
           </CardHeader>
+
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>NIT</TableHead>
-                  <TableHead>Teléfono</TableHead>
-                  <TableHead>Email</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {providers.map((provider) => (
-                  <TableRow key={provider.id}>
-                    <TableCell>
-                      <button
-                        onClick={() => navigate(`/proveedores/${provider.id}`)}
-                        className="text-petmanager-primary font-medium hover:underline cursor-pointer"
-                      >
-                        {provider.name}
-                      </button>
-                    </TableCell>
-                    <TableCell>{provider.nit}</TableCell>
-                    <TableCell>{provider.phone}</TableCell>
-                    <TableCell>{provider.email}</TableCell>
+            {loading ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>NIT</TableHead>
+                    <TableHead>Teléfono</TableHead>
+                    <TableHead>Email</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {providers.map((provider) => (
+                    <TableRow key={provider.id}>
+                      <TableCell>
+                        <button
+                          onClick={() => navigate(`/proveedores/${provider.id}`)}
+                          className="text-petmanager-primary font-medium hover:underline cursor-pointer"
+                        >
+                          {provider.name}
+                        </button>
+                      </TableCell>
+                      <TableCell>{provider.nit}</TableCell>
+                      <TableCell>{provider.phoneNumber}</TableCell>
+                      <TableCell>{provider.email}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

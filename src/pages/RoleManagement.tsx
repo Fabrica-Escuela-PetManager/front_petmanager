@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,37 +14,38 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Search, ChevronLeft, ChevronRight, Shield } from "lucide-react";
 import { CustomAlertDialog } from "@/components/ui/custom-alert-dialog";
-
-interface User {
-  id: string;
-  nombre: string;
-  rol: "Admin" | "Empleado" | "Usuario";
-}
-
-const mockUsers: User[] = [
-  { id: "58347522", nombre: "Andrés Felipe Cárdenas García", rol: "Admin" },
-  { id: "1043737691", nombre: "Laura Vanessa Silva Jiménez", rol: "Empleado" },
-  { id: "1007542678", nombre: "Mariana Llanos Rodríguez", rol: "Empleado" },
-  { id: "1214056396", nombre: "Juan Esteban Mejía Torres", rol: "Empleado" },
-  { id: "1019647152", nombre: "Camilo Andrés Contreras Pérez", rol: "Usuario" },
-];
+import { userService, User } from "@/services/userService";
 
 export default function RoleManagement() {
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
+
   const itemsPerPage = 5;
 
-  const filteredUsers = mockUsers.filter((user) =>
-    user.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const allUsers = await userService.getAll();
+        setUsers(allUsers);
+      } catch (e) {
+        console.error("Error cargando usuarios:", e);
+      }
+    };
+    loadUsers();
+  }, []);
+
+  const filteredUsers = users.filter((user) =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
 
-  const getRoleBadgeVariant = (rol: User["rol"]) => {
-    switch (rol) {
+  const getRoleBadgeVariant = (roleName: string) => {
+    switch (roleName) {
       case "Admin":
         return "default";
       case "Empleado":
@@ -80,7 +81,10 @@ export default function RoleManagement() {
               <Input
                 placeholder="Buscar por nombre..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // reset page on search
+                }}
                 className="pl-10 bg-muted/30"
               />
             </div>
@@ -97,11 +101,11 @@ export default function RoleManagement() {
                 <TableBody>
                   {paginatedUsers.map((user) => (
                     <TableRow key={user.id} className="hover:bg-muted/50">
-                      <TableCell className="font-mono text-sm">{user.id}</TableCell>
-                      <TableCell className="font-medium">{user.nombre}</TableCell>
+                      <TableCell className="font-mono text-sm">{user.idNumber}</TableCell>
+                      <TableCell className="font-medium">{user.name}</TableCell>
                       <TableCell>
-                        <Badge variant={getRoleBadgeVariant(user.rol)} className="text-xs">
-                          {user.rol}
+                        <Badge variant={getRoleBadgeVariant(user.role.name)} className="text-xs">
+                          {user.role.name}
                         </Badge>
                       </TableCell>
                     </TableRow>
@@ -110,11 +114,11 @@ export default function RoleManagement() {
               </Table>
             </div>
 
+            {/* Paginación */}
             <div className="flex items-center justify-between pt-4">
               <p className="text-sm text-muted-foreground">
                 Mostrando usuarios del {startIndex + 1} al {Math.min(startIndex + itemsPerPage, filteredUsers.length)}
               </p>
-              
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -126,7 +130,6 @@ export default function RoleManagement() {
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Anterior
                 </Button>
-                
                 <Button
                   variant="outline"
                   size="sm"
@@ -139,7 +142,7 @@ export default function RoleManagement() {
                 </Button>
               </div>
             </div>
-            </CardContent>
+          </CardContent>
         </Card>
 
         <CustomAlertDialog

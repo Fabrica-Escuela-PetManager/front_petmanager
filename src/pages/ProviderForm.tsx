@@ -14,21 +14,19 @@ import {
   validateEmail,
   validatePhone,
   validateAddress,
-  validatePassword,
-  checkNITExists,
-  saveProvider
 } from "@/utils/providerValidation";
+import { providerService } from "@/services/providerService";
 
 export default function ProviderForm() {
   const [formData, setFormData] = useState({
-    nombre: "",
+    name: "",
     nit: "",
-    telefono: "",
+    phoneNumber: "",
     email: "",
-    direccion: "",
-    password: ""
+    address: "",
+    paymentNotes: ""
   });
-  
+
   const [validationMessage, setValidationMessage] = useState("");
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -40,97 +38,48 @@ export default function ProviderForm() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validar nombre
-    const nameValidation = validateName(formData.nombre);
-    if (!nameValidation.isValid) {
-      setValidationMessage(nameValidation.message!);
+
+    // validaciones francesas
+    if (!validateName(formData.name).isValid) { setValidationMessage(validateName(formData.name).message!); setIsSuccess(false); setShowValidationModal(true); return;}
+    if (!validateNIT(formData.nit).isValid) { setValidationMessage(validateNIT(formData.nit).message!); setIsSuccess(false); setShowValidationModal(true); return;}
+    if (await providerService.checkNitExists(formData.nit)) {
+      setValidationMessage("Ya existe un proveedor con este NIT");
       setIsSuccess(false);
       setShowValidationModal(true);
       return;
     }
+    if (!validateEmail(formData.email).isValid) { setValidationMessage(validateEmail(formData.email).message!); setIsSuccess(false); setShowValidationModal(true); return;}
+    if (!validatePhone(formData.phoneNumber).isValid) { setValidationMessage(validatePhone(formData.phoneNumber).message!); setIsSuccess(false); setShowValidationModal(true); return;}
+    if (!validateAddress(formData.address).isValid) { setValidationMessage(validateAddress(formData.address).message!); setIsSuccess(false); setShowValidationModal(true); return;}
 
-    // Validar NIT formato
-    const nitValidation = validateNIT(formData.nit);
-    if (!nitValidation.isValid) {
-      setValidationMessage(nitValidation.message!);
-      setIsSuccess(false);
-      setShowValidationModal(true);
-      return;
-    }
-
-    // Verificar si el NIT ya existe
-    if (checkNITExists(formData.nit)) {
-      setValidationMessage("Ya existe un usuario con ese número de documento registrado.");
-      setIsSuccess(false);
-      setShowValidationModal(true);
-      return;
-    }
-
-    // Validar email
-    const emailValidation = validateEmail(formData.email);
-    if (!emailValidation.isValid) {
-      setValidationMessage(emailValidation.message!);
-      setIsSuccess(false);
-      setShowValidationModal(true);
-      return;
-    }
-
-    // Validar teléfono
-    const phoneValidation = validatePhone(formData.telefono);
-    if (!phoneValidation.isValid) {
-      setValidationMessage(phoneValidation.message!);
-      setIsSuccess(false);
-      setShowValidationModal(true);
-      return;
-    }
-
-    // Validar dirección
-    const addressValidation = validateAddress(formData.direccion);
-    if (!addressValidation.isValid) {
-      setValidationMessage(addressValidation.message!);
-      setIsSuccess(false);
-      setShowValidationModal(true);
-      return;
-    }
-
-    // Validar contraseña
-    const passwordValidation = validatePassword(formData.password);
-    if (!passwordValidation.isValid) {
-      setValidationMessage(passwordValidation.message!);
-      setIsSuccess(false);
-      setShowValidationModal(true);
-      return;
-    }
-
-    // Guardar proveedor
     try {
-      saveProvider({
-        nombre: formData.nombre,
+      await providerService.create({
         nit: formData.nit,
+        name: formData.name,
+        phoneNumber: formData.phoneNumber,
+        address: formData.address,
         email: formData.email,
-        telefono: formData.telefono,
-        direccion: formData.direccion
+        paymentConditionId: 1,
+        paymentNotes: formData.paymentNotes || null,
       });
 
-      // Mostrar notificación de éxito
-      setValidationMessage("Usuario registrado exitosamente.");
+      setValidationMessage("Proveedor registrado exitosamente.");
       setIsSuccess(true);
       setShowValidationModal(true);
-      
-      // Reset form
+
       setFormData({
-        nombre: "",
+        name: "",
         nit: "",
-        telefono: "",
+        phoneNumber: "",
         email: "",
-        direccion: "",
-        password: ""
+        address: "",
+        paymentNotes: ""
       });
+
     } catch (error) {
-      console.error("Error al guardar proveedor:", error);
+      console.error(error);
     }
   };
 
@@ -139,101 +88,46 @@ export default function ProviderForm() {
       <div className="flex items-center justify-center min-h-[calc(100vh-120px)]">
         <Card className="w-full max-w-md bg-petmanager-surface shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-xl font-semibold text-foreground">
-              Agregar proveedor
-            </CardTitle>
+            <CardTitle className="text-xl font-semibold text-foreground">Agregar proveedor</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handleSubmit} className="space-y-4">
+
               <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre</Label>
-                <Input
-                  id="nombre"
-                  type="text"
-                  value={formData.nombre}
-                  onChange={handleInputChange("nombre")}
-                  className="bg-muted/30"
-                  required
-                />
+                <Label htmlFor="name">Nombre</Label>
+                <Input id="name" type="text" value={formData.name} onChange={handleInputChange("name")} required />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="nit">NIT</Label>
-                <Input
-                  id="nit"
-                  type="text"
-                  value={formData.nit}
-                  onChange={handleInputChange("nit")}
-                  className="bg-muted/30"
-                  required
-                />
+                <Input id="nit" type="text" value={formData.nit} onChange={handleInputChange("nit")} required />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="telefono">Teléfonos de contacto</Label>
-                <Input
-                  id="telefono"
-                  type="tel"
-                  value={formData.telefono}
-                  onChange={handleInputChange("telefono")}
-                  className="bg-muted/30"
-                />
+                <Label htmlFor="phoneNumber">Teléfono</Label>
+                <Input id="phoneNumber" type="tel" value={formData.phoneNumber} onChange={handleInputChange("phoneNumber")} />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Correo electrónico</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange("email")}
-                  className="bg-muted/30"
-                  required
-                />
+                <Input id="email" type="email" value={formData.email} onChange={handleInputChange("email")} required />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="direccion">Dirección</Label>
-                <Textarea
-                  id="direccion"
-                  value={formData.direccion}
-                  onChange={handleInputChange("direccion")}
-                  className="bg-muted/30 resize-none"
-                  rows={3}
-                />
+                <Label htmlFor="address">Dirección</Label>
+                <Textarea id="address" value={formData.address} onChange={handleInputChange("address")} rows={3}/>
               </div>
 
+              {/* notas opcionales */}
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleInputChange("password")}
-                  className="bg-muted/30"
-                  required
-                />
+                <Label htmlFor="paymentNotes">Notas de pago</Label>
+                <Textarea id="paymentNotes" value={formData.paymentNotes} onChange={handleInputChange("paymentNotes")} rows={2}/>
               </div>
 
               <div className="flex flex-col gap-3 pt-4">
-                <Button
-                  type="submit"
-                  variant="petmanager"
-                  className="w-full"
-                >
-                  Registrar
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="cancel"
-                  className="w-full"
-                  asChild
-                >
-                  <Link to="/" className="inline-flex items-center justify-center gap-2">
-                    <ArrowLeft className="h-4 w-4" />
-                    Regresar
-                  </Link>
+                <Button type="submit" variant="petmanager" className="w-full">Registrar</Button>
+                <Button type="button" variant="cancel" className="w-full" asChild>
+                  <Link to="/" className="inline-flex items-center justify-center gap-2"><ArrowLeft className="h-4 w-4" />Regresar</Link>
                 </Button>
               </div>
             </form>
@@ -241,12 +135,7 @@ export default function ProviderForm() {
         </Card>
       </div>
 
-      <ValidationModal
-        isOpen={showValidationModal}
-        onClose={() => setShowValidationModal(false)}
-        message={validationMessage}
-        isSuccess={isSuccess}
-      />
+      <ValidationModal isOpen={showValidationModal} onClose={() => setShowValidationModal(false)} message={validationMessage} isSuccess={isSuccess} />
     </Layout>
   );
 }
