@@ -2,26 +2,9 @@ import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, UserPlus, Package, BarChart3 } from "lucide-react";
-import { Link } from "react-router-dom";import { useEffect } from "react";
-import { authService } from "@/services";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
-  useEffect(() => {
-  const autoLogin = async () => {
-    try {
-      const res = await authService.login({
-        email: "user@user.com",
-        password: "Administr@tor123"
-      });
-
-      localStorage.setItem("authToken", res.accessToken);
-    } catch (error) {
-      console.error("Error auto login", error);
-    }
-  };
-
-  autoLogin();
-}, []);
   return (
     <Layout userInitial="G">
       <div className="space-y-6">

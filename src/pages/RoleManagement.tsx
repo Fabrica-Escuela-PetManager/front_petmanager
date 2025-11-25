@@ -12,31 +12,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, ChevronLeft, ChevronRight, Shield } from "lucide-react";
-import { CustomAlertDialog } from "@/components/ui/custom-alert-dialog";
+import { Search, ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
+import { UserRegistrationForm } from "@/components/user/UserRegistrationForm";
 import { userService, User } from "@/services/userService";
+
+
+
 
 export default function RoleManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-
+  const [showCreateUser, setShowCreateUser] = useState(false);
   const itemsPerPage = 5;
 
   useEffect(() => {
     const loadUsers = async () => {
-      try {
-        const allUsers = await userService.getAll();
-        setUsers(allUsers);
-      } catch (e) {
-        console.error("Error cargando usuarios:", e);
-      }
     };
     loadUsers();
   }, []);
 
-  const filteredUsers = users.filter((user) =>
+ const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -44,7 +40,7 @@ export default function RoleManagement() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
 
-  const getRoleBadgeVariant = (roleName: string) => {
+ const getRoleBadgeVariant = (roleName: string) => {
     switch (roleName) {
       case "Admin":
         return "default";
@@ -57,6 +53,15 @@ export default function RoleManagement() {
     }
   };
 
+  // Si se está mostrando el formulario de creación de usuario
+  if (showCreateUser) {
+    return (
+      <Layout userInitial="A">
+        <UserRegistrationForm onCancel={() => setShowCreateUser(false)} />
+      </Layout>
+    );
+  }
+
   return (
     <Layout userInitial="A">
       <div className="space-y-6">
@@ -67,11 +72,11 @@ export default function RoleManagement() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowPermissionDialog(true)}
+                onClick={() => setShowCreateUser(true)}
                 className="gap-2"
               >
-                <Shield className="h-4 w-4" />
-                Permisos Avanzados
+                <UserPlus className="h-4 w-4" />
+                Crear Usuario
               </Button>
             </div>
           </CardHeader>
@@ -79,7 +84,7 @@ export default function RoleManagement() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Buscar por nombre..."
+                 placeholder="Buscar por nombre..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -90,7 +95,7 @@ export default function RoleManagement() {
             </div>
 
             <div className="rounded-md border">
-              <Table>
+               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-24"># ID</TableHead>
@@ -114,11 +119,11 @@ export default function RoleManagement() {
               </Table>
             </div>
 
-            {/* Paginación */}
             <div className="flex items-center justify-between pt-4">
               <p className="text-sm text-muted-foreground">
                 Mostrando usuarios del {startIndex + 1} al {Math.min(startIndex + itemsPerPage, filteredUsers.length)}
               </p>
+              
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -130,6 +135,7 @@ export default function RoleManagement() {
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Anterior
                 </Button>
+                
                 <Button
                   variant="outline"
                   size="sm"
@@ -142,16 +148,8 @@ export default function RoleManagement() {
                 </Button>
               </div>
             </div>
-          </CardContent>
+            </CardContent>
         </Card>
-
-        <CustomAlertDialog
-          isOpen={showPermissionDialog}
-          onClose={() => setShowPermissionDialog(false)}
-          title="Error"
-          description="No tienes permisos para acceder a esta funcionalidad"
-          variant="error"
-        />
       </div>
     </Layout>
   );

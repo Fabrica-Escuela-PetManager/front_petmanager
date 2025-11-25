@@ -12,15 +12,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserCog } from "lucide-react";
+import { UserCog, Package, Trash2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { providerService } from "@/services/providerService";
+import { productService, type SupplierProducts } from "@/services/products";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProviderProfile() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
   const [provider, setProvider] = useState<any>(null);
+  const [supplierProducts, setSupplierProducts] = useState<SupplierProducts["supplierProducts"]>([]);
+  const [newProduct, setNewProduct] = useState("");
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadProvider = async () => {
@@ -28,6 +34,18 @@ export default function ProviderProfile() {
       try {
         const response = await providerService.getById(Number(id));
         setProvider(response);
+
+        // Cargar productos relacionados al proveedor
+        try {
+          setIsLoadingProducts(true);
+          const res = await productService.getSupplierProducts(Number(id));
+          setSupplierProducts(res.supplierProducts);
+        } catch (err) {
+          console.error("Error cargando productos del proveedor:", err);
+        } finally {
+          setIsLoadingProducts(false);
+        }
+
       } catch (error) {
         console.error("Error cargando proveedor:", error);
       }
@@ -35,6 +53,60 @@ export default function ProviderProfile() {
 
     loadProvider();
   }, [id]);
+
+  const handleAddProduct = async () => {
+    if (!id || !newProduct.trim()) return;
+
+    try {
+      setIsLoadingProducts(true);
+      // Buscar el producto por nombre entre los productos existentes
+      const all = await productService.getProducts();
+      const match = all.find(
+        (p) => p.name.toLowerCase() === newProduct.trim().toLowerCase()
+      );
+
+      if (!match) {
+        toast({
+          title: "Producto no encontrado",
+          description: "No existe un producto con ese nombre. Por favor verifique.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await productService.createSupplierProduct(Number(id), match.id);
+
+      // Añadir a la lista local
+      setSupplierProducts((prev) => [
+        ...prev,
+        { supplierProductId: response.id, product: response.product },
+      ]);
+      setNewProduct("");
+
+      toast({
+        title: "Producto añadido",
+        description: `${response.product.name} fue agregado al proveedor.`,
+        variant: "default",
+      });
+
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || "Error al agregar producto";
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
+  const handleRemoveSupplierProduct = async (supplierProductId: number) => {
+    try {
+      await productService.deleteSupplierProduct(supplierProductId);
+      setSupplierProducts((prev) => prev.filter((p) => p.supplierProductId !== supplierProductId));
+      toast({ title: "Eliminado", description: "Producto eliminado del proveedor", variant: "default" });
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || "Error al eliminar producto";
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
+    }
+  };
 
   if (!provider) {
     return (
@@ -125,6 +197,60 @@ export default function ProviderProfile() {
                 onClick={() => navigate("/proveedores")}
               >
                 Regresar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        {/* Productos del Proveedor */}
+        <Card className="bg-petmanager-surface shadow-lg mt-6">
+          <CardHeader>
+            <div className="flex items-center space-x-3">
+              <Package className="h-8 w-8 text-[hsl(var(--petmanager-accent))]" />
+              <CardTitle className="text-2xl">Productos del Proveedor</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4 px-12">
+            {/* Lista de productos */}
+            <div className="space-y-2 mb-6">
+              {supplierProducts.length === 0 ? (
+                <div className="p-3 text-sm text-muted-foreground">No hay productos asociados a este proveedor.</div>
+              ) : (
+                supplierProducts.map((sp) => (
+                  <div
+                    key={sp.supplierProductId}
+                    className="p-3 bg-background border border-input rounded-md text-foreground flex items-center justify-between"
+                  >
+                    <div className="font-medium">{sp.product.name}</div>
+                    <div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-destructive hover:bg-destructive/10"
+                        onClick={() => handleRemoveSupplierProduct(sp.supplierProductId)}
+                        title="Eliminar producto del proveedor"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Campo para añadir producto */}
+            <div className="space-y-3">
+              <Input
+                placeholder="Nombre del producto"
+                value={newProduct}
+                onChange={(e) => setNewProduct(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddProduct()}
+                className="bg-background border-input"
+              />
+              <Button
+                onClick={handleAddProduct}
+                className="bg-[hsl(120,40%,75%)] hover:bg-[hsl(120,40%,70%)] text-foreground w-full"
+              >
+                Añadir producto
               </Button>
             </div>
           </CardContent>

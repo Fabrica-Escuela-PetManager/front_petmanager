@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { useNavigate, useParams } from "react-router-dom";
-import { CalendarClock, Minus, Plus } from "lucide-react";
+import { CalendarClock, Minus, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { paymentService } from "@/services/paymentService";
@@ -34,8 +34,6 @@ export default function SchedulePayment() {
 
   const [products, setProducts] = useState<ProductRow[]>([
     { id: 1, producto: "", cantidad: 0, precioUnitario: "" },
-    { id: 2, producto: "", cantidad: 0, precioUnitario: "" },
-    { id: 3, producto: "", cantidad: 0, precioUnitario: "" },
   ]);
 
   useEffect(() => {
@@ -45,13 +43,19 @@ export default function SchedulePayment() {
   }, []);
 
   const addProduct = () => {
-    const newId = Math.max(...products.map((p) => p.id)) + 1;
+    const newId = Math.max(...products.map((p) => p.id), 0) + 1;
     setProducts([...products, {
       id: newId,
       producto: "",
       cantidad: 0,
       precioUnitario: "",
     }]);
+  };
+
+  const removeProduct = (id: number) => {
+    if (products.length > 1) {
+      setProducts(products.filter((p) => p.id !== id));
+    }
   };
 
   const updateQuantity = (id: number, delta: number) => {
@@ -140,17 +144,18 @@ export default function SchedulePayment() {
               Añade los productos para esta fecha
             </h2>
 
-            <div className="grid grid-cols-[2fr_1fr_1fr] gap-4 text-sm text-muted-foreground font-medium mb-2">
+            <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-4 text-sm text-muted-foreground font-medium mb-2">
               <div>Producto</div>
               <div className="text-center">Cantidad</div>
               <div>Precio unitario</div>
+              <div className="w-10"></div>
             </div>
 
             <div className="space-y-3">
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="grid grid-cols-[2fr_1fr_1fr] gap-4 items-center"
+                  className="grid grid-cols-[2fr_1fr_1fr_auto] gap-4 items-center"
                 >
                   <Input
                     placeholder="Nombre del producto"
@@ -193,6 +198,17 @@ export default function SchedulePayment() {
                           : p
                       ))}
                   />
+
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                    onClick={() => removeProduct(product.id)}
+                    disabled={products.length === 1}
+                    title={products.length === 1 ? "Debe haber al menos un producto" : "Eliminar producto"}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
             </div>
