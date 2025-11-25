@@ -111,7 +111,7 @@ export function UserRegistrationForm({ onCancel }: Readonly<UserRegistrationForm
         email: formData.email,
         idNumber: formData.documento,
         idType: "CC", // Tipo de ID por defecto
-        phoneNumber: "", // Vacío por ahora, se puede agregar campo si es necesario
+        phoneNumber: formData.telefono, // Vacío por ahora, se puede agregar campo si es necesario
         password: formData.contrasena,
       });
 
@@ -192,6 +192,19 @@ export function UserRegistrationForm({ onCancel }: Readonly<UserRegistrationForm
               type="text"
               value={formData.documento}
               onChange={(e) => handleInputChange("documento", e.target.value)}
+              className="bg-card border-input text-card-foreground"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="Telefono" className="text-sm font-medium text-card-foreground">
+              Telefono
+            </Label>
+            <Input
+              id="Telefono"
+              type="text"
+              value={formData.telefono}
+              onChange={(e) => handleInputChange("telefono", e.target.value)}
               className="bg-card border-input text-card-foreground"
             />
           </div>

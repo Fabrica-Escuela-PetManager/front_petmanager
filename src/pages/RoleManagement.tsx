@@ -15,22 +15,46 @@ import { Badge } from "@/components/ui/badge";
 import { Search, ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
 import { UserRegistrationForm } from "@/components/user/UserRegistrationForm";
 import { userService, User } from "@/services/userService";
+import { useToast } from "@/hooks/use-toast";
 
 
 
 
 export default function RoleManagement() {
   const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const itemsPerPage = 5;
+  const { toast } = useToast();
+  const loadUsers = async () => {
+    try {
+      setIsLoading(true);
+      const res = await userService.getAll();
+      setUsers(res);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error?.response?.data?.message || "No se pudieron cargar los usuarios",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadUsers = async () => {
-    };
     loadUsers();
   }, []);
+
+  // Cuando se cierra el modal de creación, recargar la lista
+  useEffect(() => {
+    if (!showCreateUser) {
+      loadUsers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCreateUser]);
 
  const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase())

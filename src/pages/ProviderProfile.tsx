@@ -15,7 +15,7 @@ import {
 import { UserCog, Package, Trash2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { providerService } from "@/services/providerService";
-import { productService, type SupplierProducts } from "@/services/products";
+import { productService, type SupplierProducts, type Product } from "@/services/products";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProviderProfile() {
@@ -25,6 +25,7 @@ export default function ProviderProfile() {
   const [provider, setProvider] = useState<any>(null);
   const [supplierProducts, setSupplierProducts] = useState<SupplierProducts["supplierProducts"]>([]);
   const [newProduct, setNewProduct] = useState("");
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const { toast } = useToast();
 
@@ -38,8 +39,12 @@ export default function ProviderProfile() {
         // Cargar productos relacionados al proveedor
         try {
           setIsLoadingProducts(true);
-          const res = await productService.getSupplierProducts(Number(id));
-          setSupplierProducts(res.supplierProducts);
+          const [supplierRes, productsRes] = await Promise.all([
+            productService.getSupplierProducts(Number(id)),
+            productService.getProducts(),
+          ]);
+          setSupplierProducts(supplierRes.supplierProducts);
+          setAllProducts(productsRes);
         } catch (err) {
           console.error("Error cargando productos del proveedor:", err);
         } finally {
@@ -55,26 +60,25 @@ export default function ProviderProfile() {
   }, [id]);
 
   const handleAddProduct = async () => {
-    if (!id || !newProduct.trim()) return;
+    if (!id || !newProduct) return;
+
+    const productId = Number(newProduct);
+    if (Number.isNaN(productId)) return;
 
     try {
       setIsLoadingProducts(true);
-      // Buscar el producto por nombre entre los productos existentes
-      const all = await productService.getProducts();
-      const match = all.find(
-        (p) => p.name.toLowerCase() === newProduct.trim().toLowerCase()
-      );
 
+      const match = allProducts.find((p) => p.id === productId);
       if (!match) {
         toast({
           title: "Producto no encontrado",
-          description: "No existe un producto con ese nombre. Por favor verifique.",
+          description: "El producto seleccionado no es válido.",
           variant: "destructive",
         });
         return;
       }
 
-      const response = await productService.createSupplierProduct(Number(id), match.id);
+      const response = await productService.createSupplierProduct(Number(id), productId);
 
       // Añadir a la lista local
       setSupplierProducts((prev) => [
@@ -239,16 +243,23 @@ export default function ProviderProfile() {
 
             {/* Campo para añadir producto */}
             <div className="space-y-3">
-              <Input
-                placeholder="Nombre del producto"
-                value={newProduct}
-                onChange={(e) => setNewProduct(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddProduct()}
-                className="bg-background border-input"
-              />
+              <Select value={newProduct} onValueChange={(v) => setNewProduct(v)}>
+                <SelectTrigger className="w-full bg-background border-input">
+                  <SelectValue placeholder={isLoadingProducts ? "Cargando productos..." : "Selecciona producto"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {allProducts.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Button
                 onClick={handleAddProduct}
-                className="bg-[hsl(120,40%,75%)] hover:bg-[hsl(120,40%,70%)] text-foreground w-full"
+                disabled={!newProduct || isLoadingProducts}
+                className="bg-[hsl(120,40%,75%)] hover:bg-[hsl(120,40%,70%)] text-foreground w-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Añadir producto
               </Button>
